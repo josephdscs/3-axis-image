@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Image Rotator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 16px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(102, 126, 234, 0.05);
+            margin-bottom: 30px;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: rgba(118, 75, 162, 0.15);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            color: #667eea;
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .canvas-container {
+            perspective: 1200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .canvas-container.active {
+            display: flex;
+        }
+
+        #imageCanvas {
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .controls {
+            display: none;
+        }
+
+        .controls.active {
+            display: block;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .control-value {
+            color: #667eea;
+            font-size: 0.95em;
+            font-weight: 700;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: linear-gradient(to right, #667eea 0%, #764ba2 100%);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            border: 3px solid #667eea;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            border: 3px solid #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-reset {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-reset:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-upload {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-upload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ 3D Image Rotator</h1>
+        <p class="subtitle">Upload an image and rotate it in three-dimensional space</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">🖼️</div>
+            <div class="upload-text">Click or drag image here</div>
+            <div class="upload-subtext">Supports JPG, PNG, GIF, WebP</div>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div class="canvas-container" id="canvasContainer">
+            <img id="imageCanvas" alt="Uploaded image">
+        </div>
+
+        <div class="controls" id="controls">
+            <div class="control-group">
+                <div class="control-label">
+                    <span>🔄 Rotate X (Horizontal)</span>
+                    <span class="control-value" id="valueX">0°</span>
+                </div>
+                <input type="range" id="rotateX" min="-180" max="180" value="0" step="1">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>🔄 Rotate Y (Vertical)</span>
+                    <span class="control-value" id="valueY">0°</span>
+                </div>
+                <input type="range" id="rotateY" min="-180" max="180" value="0" step="1">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>🔄 Rotate Z (Depth)</span>
+                    <span class="control-value" id="valueZ">0°</span>
+                </div>
+                <input type="range" id="rotateZ" min="-180" max="180" value="0" step="1">
+            </div>
+
+            <div class="button-group">
+                <button class="btn-reset" id="resetBtn">Reset Rotation</button>
+                <button class="btn-upload" id="uploadNewBtn">Upload New Image</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const canvasContainer = document.getElementById('canvasContainer');
+        const imageCanvas = document.getElementById('imageCanvas');
+        const controls = document.getElementById('controls');
+        const rotateX = document.getElementById('rotateX');
+        const rotateY = document.getElementById('rotateY');
+        const rotateZ = document.getElementById('rotateZ');
+        const valueX = document.getElementById('valueX');
+        const valueY = document.getElementById('valueY');
+        const valueZ = document.getElementById('valueZ');
+        const resetBtn = document.getElementById('resetBtn');
+        const uploadNewBtn = document.getElementById('uploadNewBtn');
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                loadImage(file);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                loadImage(file);
+            }
+        });
+
+        // Load image
+        function loadImage(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imageCanvas.src = e.target.result;
+                uploadArea.style.display = 'none';
+                canvasContainer.classList.add('active');
+                controls.classList.add('active');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Update rotation
+        function updateRotation() {
+            const x = rotateX.value;
+            const y = rotateY.value;
+            const z = rotateZ.value;
+
+            imageCanvas.style.transform = `rotateX(${x}deg) rotateY(${y}deg) rotateZ(${z}deg)`;
+            
+            valueX.textContent = `${x}°`;
+            valueY.textContent = `${y}°`;
+            valueZ.textContent = `${z}°`;
+        }
+
+        // Rotation controls
+        rotateX.addEventListener('input', updateRotation);
+        rotateY.addEventListener('input', updateRotation);
+        rotateZ.addEventListener('input', updateRotation);
+
+        // Reset button
+        resetBtn.addEventListener('click', () => {
+            rotateX.value = 0;
+            rotateY.value = 0;
+            rotateZ.value = 0;
+            updateRotation();
+        });
+
+        // Upload new button
+        uploadNewBtn.addEventListener('click', () => {
+            uploadArea.style.display = 'block';
+            canvasContainer.classList.remove('active');
+            controls.classList.remove('active');
+            fileInput.value = '';
+            rotateX.value = 0;
+            rotateY.value = 0;
+            rotateZ.value = 0;
+        });
+    </script>
+</body>
+</html>
